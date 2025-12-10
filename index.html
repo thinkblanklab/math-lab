@@ -16,14 +16,13 @@
         }
 
 
-/* 모바일 전용 스타일 (화면이 780px보다 작을 때) */
-@media (max-width: 780px) {
+/* 모바일 전용 스타일 (화면이 700px보다 작을 때) */
+@media (max-width: 700px) {
     .control-panel {
-        padding: 0px; /* 모바일에서는 여백을 절반으로 줄임 */
+        padding: 15px; /* 모바일에서는 여백을 절반으로 줄임 */
         width: 100%;   /* 모바일에서는 꽉 차게 */
         box-shadow: none; /* 모바일에서는 그림자 없애서 깔끔하게 (선택사항) */
     }
-        .tab-btn { font-size: 0.5em; font-weight: bold; color: #888;}
 
     h1 { font-size: 1.5em; } /* 제목도 너무 크지 않게 조절 */
 }
@@ -829,6 +828,7 @@ function startGeneration(shouldPrint = true) {
 </script>
 </body>
 </html>
+
 
 
 
