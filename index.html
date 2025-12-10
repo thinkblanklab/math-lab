@@ -217,6 +217,35 @@
     color: #777;
 }
 
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-preview,
+.btn-main {
+  border-radius: 999px;
+  font-size: 14px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+
+.btn-preview {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.btn-main {
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 9px 24px;
+}
+
+		
     </style>
 </head>
 <body>
@@ -407,17 +436,15 @@
 
             </select>
         </div>
-        <button type="button"
-        class="preview-btn"
-        onclick="startGeneration(false)">
-  미리보기
-</button>
+       <div class="btn-row">
+  <button type="button" class="btn-preview" onclick="startGeneration(false)">
+    미리보기
+  </button>
+  <button type="button" class="btn-main" onclick="startGeneration(true)">
+    문제집 만들기 & 인쇄
+  </button>
+</div>
 
-<button type="button"
-        class="generate-btn"
-        onclick="startGeneration(true)">
-  문제집 만들기 & 인쇄
-</button>
     </div>
 </div>
 
@@ -625,6 +652,7 @@ function andParticle(num) {
 
     // [V45] 페이지 구성 로직 (유형별 분리 + V46 균등배분)
 // [V46] 페이지 구성 로직 (장 수 기준 + 세로 나눗셈 시 장당 12문제)
+
 function startGeneration(shouldPrint = true) {
     const checkboxes = document.querySelectorAll(`#${currentGrade} input[type="checkbox"]:checked`);
     if (checkboxes.length === 0) { 
@@ -789,16 +817,16 @@ function startGeneration(shouldPrint = true) {
 
     // ✅ 인쇄 / 미리보기 분기
     if (shouldPrint) {
-        // PC용 인쇄
         setTimeout(() => window.print(), 500);
     } else {
-        // 미리보기: 생성된 영역으로 스크롤만
         printArea.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
 
+
 </script>
 </body>
 </html>
+
 
