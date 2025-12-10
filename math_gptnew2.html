@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초1~3 무한 연산 생성기</title>
+    <style>
+
+        /* [공통 스타일] */
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        
+        .control-panel { 
+            max-width: 1000px;  width: 96%;  margin: 0 auto; background: white; padding: 30px;
+            border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            text-align: center;
+        }
+
+
+/* 모바일 전용 스타일 (화면이 600px보다 작을 때) */
+@media (max-width: 600px) {
+    .control-panel {
+        padding: 15px; /* 모바일에서는 여백을 절반으로 줄임 */
+        width: 100%;   /* 모바일에서는 꽉 차게 */
+        box-shadow: none; /* 모바일에서는 그림자 없애서 깔끔하게 (선택사항) */
+    }
+    
+    h1 { font-size: 1.5em; } /* 제목도 너무 크지 않게 조절 */
+}
+
+
+        h1 { margin-bottom: 10px; color: #333; }
+        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+
+        .search-box {
+            width: 80%; padding: 12px; font-size: 1.1em; border: 2px solid #007bff; border-radius: 30px;
+            margin-bottom: 20px; outline: none; text-align: center;
+        }
+        
+        .tabs { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-size: 1.2em; font-weight: bold; color: #888; transition: 0.3s; }
+        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; }
+
+        .options { display: none; padding: 10px; background: #fff; text-align: left; }
+        .options.active { display: block; }
+
+        details { margin-bottom: 15px; background: #f9f9f9; border-radius: 10px; overflow: hidden; border: 1px solid #eee; }
+        summary {
+            padding: 15px; cursor: pointer; font-weight: bold; font-size: 1.1em; color: #444;
+            background: #f1f3f5; list-style: none; display: flex; justify-content: space-between; align-items: center;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '▼'; font-size: 0.8em; color: #888; transition: 0.3s; }
+        details[open] summary::after { transform: rotate(180deg); }
+        
+        .opt-content { padding: 20px; }
+        .sub-category {
+            font-size: 1.05em; font-weight: bold; color: #007bff; 
+            margin-top: 20px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e9ecef;
+        }
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+        .checkbox-group label { cursor: pointer; font-size: 0.95em; display: flex; align-items: center; gap: 8px; color: #555; }
+        .checkbox-group label:hover { color: #000; background: #eef; border-radius: 5px; }
+        .v-label { color: #0056b3; font-weight: bold; background: #e7f1ff; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; margin-left: 5px; }
+
+        .bottom-controls {
+            margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee;
+            display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;
+        }
+        .ctrl-group { display: flex; flex-direction: column; text-align: left; }
+        .ctrl-label { font-size: 0.9em; font-weight: bold; margin-bottom: 5px; color: #555; }
+        select { padding: 10px; font-size: 1.1em; border-radius: 5px; border: 1px solid #ccc; min-width: 150px; }
+        #difficulty.diff-easy { border-color: #28a745; color: #28a745; }
+        #difficulty.diff-hard { border-color: #dc3545; color: #dc3545; }
+
+        button.print-btn { background-color: #007bff; color: white; border: none; padding: 15px 50px; font-size: 1.3em; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button.print-btn:hover { background-color: #0056b3; transform: translateY(-2px); }
+
+        #print-area { display: none; }
+
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            .control-panel { display: none !important; } 
+            #print-area { display: block !important; }
+            @page { margin: 10mm 15mm; size: A4 portrait; }
+
+            .page { width: 100%; height: 100vh; page-break-after: always; position: relative; box-sizing: border-box; padding-top: 0; }
+            .page:last-child { page-break-after: auto; }
+
+            .paper-header { border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; text-align: center; padding-top: 5px; }
+            .paper-title { font-size: 20pt; font-weight: bold; margin-bottom: 5px; }
+            .paper-info { display: flex; justify-content: space-between; font-size: 10pt; color: #333; font-weight: bold; }
+            .simple-header { text-align: right; border-bottom: 1px dashed #ccc; margin-bottom: 10px; padding-bottom: 5px; color: #888; font-size: 9pt; padding-top: 10px; }
+
+            /* 구역별 그리드 (간격 조정) */
+            .section-grid-4 { 
+                display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; margin-bottom: 15px;
+            }
+            .section-grid-2 { 
+                display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px 20px; margin-bottom: 15px;
+            }
+            
+            .problem-item { box-sizing: border-box; padding: 5px 5px; border-bottom: 1px dashed #eee; display: flex; page-break-inside: avoid; }
+            
+            /* [V46 수정] 높이를 조금 더 넉넉하게 키움 */
+            
+            /* 가로셈: 60px -> 80px */
+            .problem-item.type-h { 
+                min-height: 80px; 
+                align-items: center; 
+            }
+            .problem-text-h { font-family: 'Courier New', monospace; font-weight: bold; font-size: 18pt; margin-left: 5px; margin-top: 5px; }
+
+            /* 일반 세로셈: 120px -> 150px */
+            .problem-item.type-v { 
+                min-height: 150px; 
+                align-items: flex-start; 
+                padding-top: 15px; 
+            }
+            .problem-text-v { 
+                font-family: 'Courier New', monospace; font-weight: bold; font-size: 20pt; 
+                text-align: right; display: flex; flex-direction: column; align-items: flex-end; 
+                margin-left: 5px; width: auto;
+            }
+            
+            /* 세로 나눗셈: 200px -> 230px */
+            .problem-item.type-div-v { 
+                min-height: 230px; 
+                align-items: flex-start; 
+                padding-top: 50px; 
+                padding-bottom: 10px; 
+            }
+            .problem-text-div { font-family: 'Courier New', monospace; font-weight: bold; font-size: 20pt; margin-left: 5px; }
+
+            .problem-num { font-size: 9pt; color: #666; width: 18px; flex-shrink: 0; margin-top: 6px; }
+            .v-row { letter-spacing: 2px; padding-right: 5px; margin-bottom: 5px; }
+            .v-bot { border-bottom: 2px solid #000; padding-bottom: 3px; position: relative; padding-left: 25px; min-width: 2.5em; }
+            .v-op { position: absolute; left: 2px; bottom: 3px; font-size: 0.7em; }
+
+            .v-div-box { display: flex; align-items: center; }
+            .v-div-divisor { margin-right: 6px; font-size: 20pt; }
+            .v-div-dividend { border-left: 2px solid #000; border-top: 2px solid #000; padding: 3px 8px; letter-spacing: 2px; font-size: 20pt; }
+
+            .frac { display: inline-block; text-align: center; vertical-align: middle; margin: 0 5px; font-size: 0.9em; line-height: 1.2; }
+            .frac-top { border-bottom: 2px solid #000; display: block; padding: 0 5px; }
+            .frac-bot { display: block; padding: 0 5px; }
+
+            .answer-page { padding-top: 10px; }
+            .answer-header { text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
+            .answer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px 10px; }
+            .answer-item { font-size: 11pt; padding: 4px; border-bottom: 1px dotted #ddd; display: flex; align-items: center; }
+            .answer-text { color: red; font-weight: bold; margin-left: 5px; }
+        }
+.problem-text-long {
+    font-size: 20px;        /* 줄바꿈 방지용 작은 폰트 */
+    line-height: 1.1;
+    white-space: nowrap;    /* 줄바꿈 금지 */
+    display: inline-block;
+}
+
+/* 가이드 전체를 감싸는 카드 박스 */
+.guide-card {
+    max-width: 680px;           /* 카드 최대 너비 */
+    margin: 25px auto 25px;     /* 위/아래 여백 + 가로 가운데 정렬 */
+    padding: 15px 20px;
+    background: #f7f9ff;        /* 옅은 파란 배경 */
+    border: 1px solid #dce5ff;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+/* 1, 2, 3 단계 안내 */
+.guide-top {
+    margin-bottom: 12px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-weight: 600;
+    text-align: left;           /* 카드 안에서는 왼쪽 정렬 */
+}
+
+.guide-top p {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 7px 0;
+}
+
+/* 파란 번호 배지 */
+.guide-number {
+    background: #1976d2;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* 아래쪽 규칙 설명 */
+.guide-sub {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.8;
+    text-align: left;
+}
+
+
+
+/* 정답지 푸터 */
+.answer-footer {
+    margin-top: 10px;
+    padding-top: 6px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    font-size: 9pt;
+    color: #777;
+}
+
+    </style>
+</head>
+<body>
+
+<div class="control-panel">
+    <h1>🖨️ 무한 연산 생성기</h1>
+    <p class="subtitle">"초등 1~3학년 문제 제공, 향후 업데이트 예정 "</p>
+
+<div class="guide-card">
+  <div class="guide-top">
+    <p><span class="guide-number">1</span> 학년 선택 후 원하는 문제 유형 체크.</p>
+    <p><span class="guide-number">2</span> 문제 개수 선택.</p>
+    <p><span class="guide-number">3</span> [문제집 만들기 & 인쇄] 버튼 눌러 문제 생성 후 인쇄.</p>
+  </div>
+
+  <div class="guide-sub">
+    ✔ 같은 학년의 여러 문제 유형을 함께 선택하면 문제들이 랜덤으로 섞여서 출제됩니다.<br>
+    ✔ 세로 나눗셈은 계산 공간 때문에 한 장에 최대 16문제(혼합 시 12문제)까지 출력됩니다.
+  </div>
+</div>
+
+
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 검색어 입력 (예: 100, 세 수, 빈칸, 곱셈)" onkeyup="filterOptions()">
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('grade1')">초등 1학년</button>
+        <button class="tab-btn" onclick="openTab('grade2')">초등 2학년</button>
+        <button class="tab-btn" onclick="openTab('grade3')">초등 3학년</button>
+    </div>
+
+    <div id="grade1" class="options active">
+        <details open><summary>1학기: 기초 & 2학기 예습</summary>
+            <div class="opt-content">
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g1_opt" value="num_9"> 수 가르기와 모으기</label>
+                    <label><input type="checkbox" name="g1_opt" value="add_sub_9"> 덧셈과 뺄셈 (합이 9 이하)</label>
+                    <label><input type="checkbox" name="g1_opt" value="add_0"> 0을 더하기와 빼기</label>
+                    <label><input type="checkbox" name="g1_opt" value="make_10_add"> 10이 되는 더하기 (3 + □ = 10)</label>
+                    <label><input type="checkbox" name="g1_opt" value="make_10_sub"> 10에서 빼기 (10 - 7 = □)</label>
+                    <label><input type="checkbox" name="g1_opt" value="compare_num"> 수의 크기 비교 (7 □ 9)</label>
+                </div>
+            </div>
+        </details>
+        
+        <details><summary>2학기: 100까지의 수 & 연산</summary>
+            <div class="opt-content">
+                <div class="sub-category">1. 기본 (받아올림/내림 없음)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g1_opt" value="add_no_carry"> 두 자리 수 + 한 자리 수</label>
+                    <label><input type="checkbox" name="g1_opt" value="sub_no_borrow"> 두 자리 수 - 한 자리 수</label>
+                    <label><input type="checkbox" name="g1_opt" value="v_add_no_carry"><span class="v-label">세로</span> 두 자리 수 + 한 자리 수</label>
+                    <label><input type="checkbox" name="g1_opt" value="v_sub_no_borrow"><span class="v-label">세로</span> 두 자리 수 - 한 자리 수</label>
+                </div>
+                <div class="sub-category">2. 심화 (받아올림/내림 있음)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g1_opt" value="add_11_carry"> 한 자리 수 + 한 자리 수</label>
+                    <label><input type="checkbox" name="g1_opt" value="v_add_11_carry"><span class="v-label">세로</span> 한 자리 수 + 한 자리 수 </label>
+                    <label><input type="checkbox" name="g1_opt" value="add3_make10"> 10을 만들어 더하기 (세 수)</label> 
+                    <label><input type="checkbox" name="g1_opt" value="sub_with_borrow"> 십몇 - 몇 (받아내림)</label>
+                    <label><input type="checkbox" name="g1_opt" value="v_sub_with_borrow"><span class="v-label">세로</span> 십몇 - 몇</label>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div id="grade2" class="options">
+        <details open><summary>1학기: 두 자리 수 덧셈·뺄셈 (심화 포함)</summary>
+            <div class="opt-content">
+                <div class="sub-category">1. <span class="v-label">세로</span> 덧셈·뺄셈</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g2_opt" value="v_add_22_c1"> 두 자리 수 + 두 자리 수 (받아올림 1번)</label>
+                    <label><input type="checkbox" name="g2_opt" value="v_add_22_c2"> 두 자리 수 + 두 자리 수 (받아올림 2번)</label>
+                    <label><input type="checkbox" name="g2_opt" value="v_sub_22_b1"> 두 자리 수 - 두 자리 수 (받아내림 1번)</label>
+                    <label><input type="checkbox" name="g2_opt" value="v_sub_from_3digit"> <span class="v-label">세로</span> 세 자리 수(100~199) - 두 자리 수</label>
+                </div>
+
+                <div class="sub-category">2. <span class="v-label">가로</span> 세 수의 덧셈·뺄셈</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g2_opt" value="add_3_nums"> 세 수의 덧셈</label>
+                    <label><input type="checkbox" name="g2_opt" value="sub_3_nums"> 세 수의 뺄셈</label>
+                    <label><input type="checkbox" name="g2_opt" value="mix_3_nums"> 세 수의 덧셈과 뺄셈 섞어 풀기</label>
+                    <label><input type="checkbox" name="g2_opt" value="start_3digit_calc"> 100단위(100~199)에서 빼고 더하기</label>
+                </div>
+
+                <div class="sub-category">3. □ 구하기 (덧셈과 뺄셈의 관계)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g2_opt" value="find_square_add"> □ + (수) = (합) / (수) + □ = (합)</label>
+                    <label><input type="checkbox" name="g2_opt" value="find_square_sub"> (수) - □ = (차) / □ - (수) = (차)</label>
+                </div>
+            </div>
+        </details>
+
+        <details><summary>2학기: 곱셈구구</summary>
+            <div class="opt-content">
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g2_opt" value="multi_2_5"> 곱셈구구 2~5단</label>
+                    <label><input type="checkbox" name="g2_opt" value="multi_6_9"> 곱셈구구 6~9단</label>
+                    <label><input type="checkbox" name="g2_opt" value="multi_all"> 곱셈구구 2~9단 섞어서</label>
+                    <label><input type="checkbox" name="g2_opt" value="multi_blank"> 곱셈구구 빈칸 채우기</label>
+                    <label><input type="checkbox" name="g2_opt" value="multi_0_1"> 0단과 1단 연습</label>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div id="grade3" class="options">
+        <details open><summary>1학기: 덧셈·뺄셈 / 나눗셈 / 곱셈</summary>
+            <div class="opt-content">
+                <div class="sub-category">1. 덧셈과 뺄셈</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="add_33_carry">세 자리 수 + 세 자리 수</label>
+                    <label><input type="checkbox" name="g3_opt" value="sub_33_borrow">세 자리 수 - 세 자리 수</label><br>
+                    <label><input type="checkbox" name="g3_opt" value="v_add_3"><span class="v-label">세로</span> 세 자리 수 + 세 자리 수</label>
+                    <label><input type="checkbox" name="g3_opt" value="v_sub_3"><span class="v-label">세로</span> 세 자리 수 - 세 자리 수</label>
+                </div>
+                
+                <div class="sub-category">2. 나눗셈 (기초)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="div_basic_gugu"> 구구단으로 풀리는 나눗셈</label>
+                    <label><input type="checkbox" name="g3_opt" value="div_21_calc"> (두 자리) ÷ (한 자리)</label>
+                    <label><input type="checkbox" name="g3_opt" value="v_div_21"><span class="v-label">세로</span> (두 자리) ÷ (한 자리)</label>
+                </div>
+
+                <div class="sub-category">3. 곱셈 (기초)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="multi_21"> (두 자리) × (한 자리)</label>
+                    <label><input type="checkbox" name="g3_opt" value="v_multi_21"><span class="v-label">세로</span> (두 자리) × (한 자리)</label>
+                </div>
+            </div>
+        </details>
+
+        <details><summary>2학기: 곱셈(심화) / 나눗셈(심화) / 분수</summary>
+            <div class="opt-content">
+                <div class="sub-category">1. 곱셈 (확장)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="multi_22"> (두 자리) × (두 자리)</label>
+                    <label><input type="checkbox" name="g3_opt" value="v_multi_22"><span class="v-label">세로</span> (두 자리) × (두 자리)</label>
+                    <label><input type="checkbox" name="g3_opt" value="multi_31"> (세 자리) × (한 자리)</label>
+                    <label><input type="checkbox" name="g3_opt" value="v_multi_31"><span class="v-label">세로</span> (세 자리) × (한 자리)</label>
+                </div>
+                
+                <div class="sub-category">2. 나눗셈 (확장)</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="div_21_rem"> (두 자리) ÷ (한 자리) [나머지O]</label>
+                    <label><input type="checkbox" name="g3_opt" value="div_31_no_rem"> (세 자리) ÷ (한 자리) [나머지X]</label>
+                    <label><input type="checkbox" name="g3_opt" value="div_31_rem"> (세 자리) ÷ (한 자리) [나머지O]</label>
+<!-- 기존 나눗셈 확장 3개 아래에 추가 -->
+
+<label>
+    <input type="checkbox" name="g3_2_opt" value="v_div2_v">
+    <span class="v-label">세로</span> (두 자리) ÷ (한 자리) [나머지O]
+</label>
+
+<label>
+    <input type="checkbox" name="g3_2_opt" value="v_div3_no_v">
+    <span class="v-label">세로</span> (세 자리) ÷ (한 자리) [나머지X]
+</label>
+
+<label>
+    <input type="checkbox" name="g3_2_opt" value="v_div3_v">
+    <span class="v-label">세로</span> (세 자리) ÷ (한 자리) [나머지O]
+</label>
+
+                </div>
+
+                <div class="sub-category">3. 분수</div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="g3_opt" value="frac_unit_cmp"> 단위분수 크기 비교</label>
+                    <label><input type="checkbox" name="g3_opt" value="frac_same_cmp"> 분모 같은 분수 비교</label>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div class="bottom-controls">
+               <div class="ctrl-group">
+            <label class="ctrl-label">문제 수</label>
+            <select id="q_count">
+                <option value="20">20문제 (1장)</option>
+		<option value="30">30문제 (1.5장)</option>
+		<option value="40">40문제 (2장)</option>
+		<option value="50">50문제 (2.5장)</option>
+		<option value="60">60문제 (3장)</option>
+		<option value="70">70문제 (3.5장)</option>
+		<option value="80">80문제 (4장)</option>
+		<option value="90">90문제 (4.5장)</option>
+		<option value="100">100문제 (5장)</option>
+
+            </select>
+        </div>
+        <button class="print-btn" onclick="startGeneration()">문제집 만들기 & 인쇄</button>
+    </div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+    let currentGrade = 'grade1';
+    
+    function isVerticalDivType(type) { return type.includes('v_div'); }
+
+    function openTab(gradeId) {
+        document.querySelectorAll('.options').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(gradeId).classList.add('active');
+        event.target.classList.add('active');
+        currentGrade = gradeId;
+        filterOptions();
+    }
+
+    function filterOptions() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const activeGroup = document.getElementById(currentGrade);
+        const details = activeGroup.querySelectorAll('details');
+        if (keyword) details.forEach(d => d.open = true);
+        activeGroup.querySelectorAll('label').forEach(label => {
+            label.style.display = label.innerText.toLowerCase().includes(keyword) ? "flex" : "none";
+        });
+    }
+
+   function rand(min, max) {
+        // 난이도 없이, 범위 안에서 균일하게 랜덤 생성
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+// 한 자리 숫자(1~9)에 대해 받침 유무 판단용
+function hasBatchim(num) {
+    // 한자음 기준: 1일, 2이, 3삼, 4사, 5오, 6육, 7칠, 8팔, 9구
+    // 받침 있는 것: 1(일), 3(삼), 6(육), 7(칠), 8(팔)
+    // 받침 없는 것: 2(이), 4(사), 5(오), 9(구)
+    const batchimNums = [1, 3, 6, 7, 8];
+    return batchimNums.includes(num);
+}
+
+// '은/는', '과/와' 자동 선택
+function topicParticle(num) {
+    return hasBatchim(num) ? '은' : '는';
+}
+function andParticle(num) {
+    return hasBatchim(num) ? '과' : '와';
+}
+
+
+    function fracHTML(top, bot) {
+        return `<span class="frac"><span class="frac-top">${top}</span><span class="frac-bot">${bot}</span></span>`;
+    }
+    
+    function createVHTML(n1, n2, op) {
+        return `<div class="v-row">${n1}</div><div class="v-row v-bot"><span class="v-op">${op}</span>${n2}</div>`;
+    }
+
+    function generateProblem(type) {
+        let q, a, isVertical = false, isVerticalDiv = false;
+        
+        // 1학년
+       if (type === 'num_9') { 
+    let m = rand(2,9), s = rand(1,m-1); 
+
+    const t1 = topicParticle(m);  // 은/는
+    const t2 = andParticle(s);    // 과/와
+
+    q = `<span class="problem-text-long">${m}${t1} ${s}${t2} □로 가를 수 있다.</span>`;
+    a = m - s; 
+}
+
+        else if (type === 'add_sub_9') { if(Math.random()>0.5){let n1=rand(1,8), n2=rand(1,9-n1); q=`${n1} + ${n2} =`; a=n1+n2;}else{let n1=rand(2,9), n2=rand(1,n1); q=`${n1} - ${n2} =`; a=n1-n2;} }
+        else if (type === 'add_0') { let n=rand(1,9); q=`${n} + 0 =`; a=n; }
+        else if (type === 'make_10_add') { let n=rand(1,9), c=10-n; if(Math.random()>0.5){q=`${n} + □ = 10`; a=c;}else{q=`□ + ${n} = 10`; a=c;} }
+        else if (type === 'make_10_sub') { let n=rand(1,9), c=10-n; if(Math.random()>0.5){q=`10 - ${n} = □`; a=c;}else{q=`10 - □ = ${n}`; a=c;} }
+        else if (type === 'compare_num') { let n1=rand(1,99), n2=rand(1,99); while(n1===n2)n2=rand(1,99); q=`${n1} □ ${n2}`; a=(n1>n2)?'>':'<'; }
+        else if (type === 'add_no_carry') { let t1=rand(1,9), u1=rand(0,8), n1=t1*10+u1, n2=rand(1,9-u1); q=`${n1} + ${n2} =`; a=n1+n2; }
+        else if (type === 'sub_no_borrow') { let t1=rand(1,9), u1=rand(1,9), n2=rand(1,u1), n1=t1*10+u1; q=`${n1} - ${n2} =`; a=n1-n2; }
+        else if (type === 'v_add_no_carry') { isVertical=true; let t1=rand(1,9), u1=rand(0,8), n1=t1*10+u1, n2=rand(1,9-u1); q=createVHTML(n1,n2,'+'); a=n1+n2; }
+        else if (type === 'v_sub_no_borrow') { isVertical=true; let t1=rand(2,9), u1=rand(1,9), n2=rand(1,u1), n1=t1*10+u1; q=createVHTML(n1,n2,'-'); a=n1-n2; }
+        else if (type === 'add_11_carry') { let n1,n2; do{n1=rand(1,9);n2=rand(1,9);}while(n1+n2<10); q=`${n1} + ${n2} =`; a=n1+n2; }
+        else if (type === 'v_add_11_carry') { isVertical=true; let n1,n2; do{n1=rand(1,9);n2=rand(1,9);}while(n1+n2<10); q=createVHTML(n1,n2,'+'); a=n1+n2; }
+        else if (type === 'add3_make10') { let p=rand(1,9), c=10-p, e=rand(1,9), arr=[p,c,e].sort(()=>Math.random()-0.5); q=`${arr[0]} + ${arr[1]} + ${arr[2]} =`; a=10+e; }
+        else if (type === 'sub_with_borrow') { let t1=1, u1=rand(0,8), n2=rand(u1+1,9), n1=t1*10+u1; q=`${n1} - ${n2} =`; a=n1-n2; }
+        else if (type === 'v_sub_with_borrow') { isVertical=true; let t1=1, u1=rand(0,8), n2=rand(u1+1,9), n1=t1*10+u1; q=createVHTML(n1,n2,'-'); a=n1-n2; }
+
+        // 2학년
+        else if (type === 'v_add_22_c1') { isVertical=true; let u1=rand(1,9), u2=rand(10-u1,9), t1=rand(1,7), t2=rand(1,8-t1); q=createVHTML(t1*10+u1,t2*10+u2,'+'); a=(t1*10+u1)+(t2*10+u2); }
+        else if (type === 'v_add_22_c2') { isVertical=true; let u1=rand(1,9), u2=rand(10-u1,9), t1=rand(1,9), t2=rand(Math.max(1,9-t1),9); q=createVHTML(t1*10+u1,t2*10+u2,'+'); a=(t1*10+u1)+(t2*10+u2); }
+        else if (type === 'v_sub_22_b1') { isVertical=true; let t1=rand(2,9), u1=rand(0,8), n1=t1*10+u1, u2=rand(u1+1,9), t2=rand(1,t1-1); q=createVHTML(n1,t2*10+u2,'-'); a=n1-(t2*10+u2); }
+        else if (type === 'v_sub_from_3digit') { isVertical=true; let n1=rand(100,199), n2=rand(10,99); while(n1<=n2){n1=rand(100,199);n2=rand(10,99);} q=createVHTML(n1,n2,'-'); a=n1-n2; }
+        else if (type === 'add_3_nums') { let x=rand(10,50), y=rand(10,30), z=rand(1,9); q=`${x} + ${y} + ${z} =`; a=x+y+z; }
+        else if (type === 'sub_3_nums') { let x=rand(30,90), y=rand(5,15), z=rand(1,9); q=`${x} - ${y} - ${z} =`; a=x-y-z; }
+        else if (type === 'mix_3_nums') { if(Math.random()>0.5){let x=rand(10,50), y=rand(10,30), z=rand(5,15); q=`${x} + ${y} - ${z} =`; a=x+y-z;}else{let x=rand(30,80), y=rand(5,20), z=rand(5,20); q=`${x} - ${y} + ${z} =`; a=x-y+z;} }
+        else if (type === 'start_3digit_calc') { let n1=rand(100,199), n2=rand(10,60), n3=rand(5,50); if(Math.random()>0.5){while(n1-n2-n3<0){n1=rand(100,199);n2=rand(10,40);n3=rand(5,30);} q=`${n1} - ${n2} - ${n3} =`; a=n1-n2-n3;}else{while(n1-n2<0){n1=rand(100,199);n2=rand(10,80);} q=`${n1} - ${n2} + ${n3} =`; a=n1-n2+n3;} }
+        else if (type === 'find_square_add') { let n1=rand(10,50), n2=rand(10,49), s=n1+n2; if(Math.random()>0.5){q=`${n1} + □ = ${s}`; a=n2;}else{q=`□ + ${n2} = ${s}`; a=n1;} }
+        else if (type === 'find_square_sub') { let n1=rand(20,99), n2=rand(1,n1-10), d=n1-n2; if(Math.random()>0.5){q=`${n1} - □ = ${d}`; a=n2;}else{q=`□ - ${n2} = ${d}`; a=n1;} }
+        else if (type === 'multi_2_5') { let n1=rand(2,5), n2=rand(1,9); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'multi_6_9') { let n1=rand(6,9), n2=rand(1,9); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'multi_all') { let n1=rand(2,9), n2=rand(1,9); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'multi_blank') { let n1=rand(2,9), n2=rand(2,9), p=n1*n2; if(Math.random()>0.5){q=`${n1} × □ = ${p}`; a=n2;}else{q=`□ × ${n2} = ${p}`; a=n1;} }
+        else if (type === 'multi_0_1') { let n1=rand(0,1), n2=rand(1,9); if(Math.random()>0.5){q=`${n1} × ${n2} =`; a=n1*n2;}else{q=`${n2} × ${n1} =`; a=n2*n1;} }
+
+        // 3학년
+        else if (type === 'add_33_carry') { let n1=rand(150,850), n2=rand(150,850); q=`${n1} + ${n2} =`; a=n1+n2; }
+        else if (type === 'sub_33_borrow') { let n1=rand(300,999), n2=rand(150,n1-50); q=`${n1} - ${n2} =`; a=n1-n2; }
+        else if (type === 'v_add_3') { isVertical=true; let n1=rand(150,850), n2=rand(150,850); q=createVHTML(n1,n2,'+'); a=n1+n2; }
+        else if (type === 'v_sub_3') { isVertical=true; let n1=rand(300,999), n2=rand(150,n1-50); q=createVHTML(n1,n2,'-'); a=n1-n2; }
+        else if (type === 'div_basic_gugu') { let d=rand(2,9), qv=rand(1,9), n=d*qv; q=`${n} ÷ ${d} =`; a=qv; }
+        else if (type === 'div_21_calc') { let d,qv,n; while(true){d=rand(2,9);qv=rand(2,9);n=d*qv;if(n>=10&&n<=99)break;} q=`${n} ÷ ${d} =`; a=qv; }
+        else if (type === 'v_div_21') { isVerticalDiv=true; let d,qv,n; while(true){d=rand(2,9);qv=rand(2,9);n=d*qv;if(n>=10&&n<=99)break;} q=`<div class="v-div-box"><span class="v-div-divisor">${d}</span><span class="v-div-dividend">${n}</span></div>`; a=qv; }
+        else if (type === 'multi_21') { let n1=rand(10,99), n2=rand(2,9); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'v_multi_21') { isVertical=true; let n1=rand(10,99), n2=rand(2,9); q=createVHTML(n1,n2,'×'); a=n1*n2; }
+        else if (type === 'multi_22') { let n1=rand(10,99), n2=rand(10,99); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'v_multi_22') { isVertical=true; let n1=rand(10,99), n2=rand(10,99); q=createVHTML(n1,n2,'×'); a=n1*n2; }
+        else if (type === 'div_21_rem') { let d,r,qv,n; while(true){d=rand(2,9);r=rand(1,d-1);let max=Math.floor((99-r)/d);if(max<2)continue;qv=rand(2,max);n=d*qv+r;if(n>=10&&n<=99)break;} q=`${n} ÷ ${d} =`; a=`${qv}...${r}`; }
+        else if (type === 'div_31_no_rem') { let d=rand(2,9), min=Math.ceil(100/d), max=Math.floor(999/d); if(min<10)min=10; if(max<min){min=2;max=Math.floor(999/d);} let qv=rand(min,max), n=d*qv; while(n<100||n>999){d=rand(2,9);min=Math.ceil(100/d);max=Math.floor(999/d);if(min<10)min=10;if(max<min){min=2;max=Math.floor(999/d);}qv=rand(min,max);n=d*qv;} q=`${n} ÷ ${d} =`; a=qv; }
+        else if (type === 'div_31_rem') { let d,r,qv,n; while(true){d=rand(2,9);r=rand(1,d-1);let min=Math.ceil(100/d), max=Math.floor((999-r)/d);if(min<10)min=10;if(max<min)continue;qv=rand(min,max);n=d*qv+r;if(n>=100&&n<=999)break;} q=`${n} ÷ ${d} =`; a=`${qv}...${r}`; }
+        // 3학년 2학기: 세로 나눗셈 (확장)
+
+        // (두 자리) ÷ (한 자리) [나머지O]  세로
+        else if (type === 'v_div2_v') {
+            isVerticalDiv = true;
+            let d, r, qv, n;
+            while (true) {
+                d = rand(2, 9);              // 나누는 수
+                r = rand(1, d - 1);          // 나머지 (0 아님)
+                const max = Math.floor((99 - r) / d);
+                if (max < 2) continue;       // 몫이 최소 2 이상 되도록
+                qv = rand(2, max);           // 몫
+                n = d * qv + r;              // 피제수
+                if (n >= 10 && n <= 99) break;
+            }
+            q = `<div class="v-div-box"><span class="v-div-divisor">${d}</span><span class="v-div-dividend">${n}</span></div>`;
+            a = `${qv}...${r}`;
+        }
+
+        // (세 자리) ÷ (한 자리) [나머지X]  세로
+        else if (type === 'v_div3_no_v') {
+            isVerticalDiv = true;
+            let d, n, qv;
+            while (true) {
+                d = rand(2, 9);
+                let min = Math.ceil(100 / d);
+                let max = Math.floor(999 / d);
+                if (min < 10) min = 10;
+                if (max < min) {             // 혹시 범위 꼬이면 다시
+                    min = 2;
+                    max = Math.floor(999 / d);
+                }
+                qv = rand(min, max);
+                n = d * qv;
+                if (n >= 100 && n <= 999) break;
+            }
+            q = `<div class="v-div-box"><span class="v-div-divisor">${d}</span><span class="v-div-dividend">${n}</span></div>`;
+            a = qv;
+        }
+
+        // (세 자리) ÷ (한 자리) [나머지O]  세로
+        else if (type === 'v_div3_v') {
+            isVerticalDiv = true;
+            let d, r, qv, n;
+            while (true) {
+                d = rand(2, 9);
+                r = rand(1, d - 1);
+                let min = Math.ceil(100 / d);
+                let max = Math.floor((999 - r) / d);
+                if (min < 10) min = 10;
+                if (max < min) continue;     // 유효한 몫 범위가 없으면 다시
+                qv = rand(min, max);
+                n = d * qv + r;
+                if (n >= 100 && n <= 999) break;
+            }
+            q = `<div class="v-div-box"><span class="v-div-divisor">${d}</span><span class="v-div-dividend">${n}</span></div>`;
+            a = `${qv}...${r}`;
+        }
+
+        else if (type === 'frac_unit_cmp') { let m1=rand(2,12), m2=rand(2,12); while(m1===m2)m2=rand(2,12); q=`${fracHTML(1,m1)} □ ${fracHTML(1,m2)}`; a=(m1<m2)?'>':'<'; }
+        else if (type === 'frac_same_cmp') { let m=rand(3,15), j1=rand(1,m-1), j2=rand(1,m-1); while(j1===j2)j2=rand(1,m-1); q=`${fracHTML(j1,m)} □ ${fracHTML(j2,m)}`; a=(j1>j2)?'>':'<'; }
+        else if (type === 'multi_31') { let n1=rand(100,999), n2=rand(2,9); q=`${n1} × ${n2} =`; a=n1*n2; }
+        else if (type === 'v_multi_31') { isVertical=true; let n1=rand(100,999), n2=rand(2,9); q=createVHTML(n1,n2,'×'); a=n1*n2; }
+        else { q="1 + 1 ="; a=2; }
+
+        if (isVerticalDivType(type)) isVerticalDiv = true;
+
+        return {q: q, a: a, isVertical: isVertical, isVerticalDiv: isVerticalDiv};
+    }
+
+    // [V46 핵심] 항목별 균등 배분(Round-Robin) 리스트 생성 함수
+    function getBalancedTypes(selectedTypes, totalCount) {
+        if (selectedTypes.length === 0) return [];
+        
+        let balancedList = [];
+        let typeIndex = 0;
+        
+        for (let i = 0; i < totalCount; i++) {
+            balancedList.push(selectedTypes[typeIndex]);
+            typeIndex = (typeIndex + 1) % selectedTypes.length; // 순환
+        }
+        return balancedList;
+    }
+
+    // [V45] 페이지 구성 로직 (유형별 분리 + V46 균등배분)
+// [V46] 페이지 구성 로직 (장 수 기준 + 세로 나눗셈 시 장당 12문제)
+function startGeneration() {
+    const checkboxes = document.querySelectorAll(`#${currentGrade} input[type="checkbox"]:checked`);
+    if (checkboxes.length === 0) { 
+        alert("문제를 선택해주세요!"); 
+        return; 
+    }
+
+const types = Array.from(checkboxes).map(cb => cb.value);
+
+// ✅ 드롭다운 값 = "실제 출제할 총 문제 수"
+const targetTotalCount = parseInt(document.getElementById('q_count').value, 10);
+
+const printArea = document.getElementById('print-area');
+printArea.innerHTML = '';
+
+const today = new Date();
+const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}`;
+
+// 세로 나눗셈 포함 여부
+const hasVDiv = types.some(t => isVerticalDivType(t));
+
+// ✅ 장당 문제 수 (세로 나눗셈 있으면 16, 아니면 20)
+const problemsPerPage = hasVDiv ? 16 : 20;
+
+
+    let allGeneratedProblems = [];
+    let totalGenerated = 0;
+    let pageNum = 1;
+
+    while (totalGenerated < targetTotalCount) {
+        const pageSize = problemsPerPage;
+        const currentBatchSize = Math.min(pageSize, targetTotalCount - totalGenerated);
+
+        // 이번 페이지에 들어갈 타입들을 균등 분배
+        let balancedTypes = [];
+        let typeIndex = totalGenerated % types.length; 
+        for (let k = 0; k < currentBatchSize; k++) {
+            balancedTypes.push(types[typeIndex]);
+            typeIndex = (typeIndex + 1) % types.length;
+        }
+
+        // 문제 생성
+        let batchProblems = [];
+        for (let i = 0; i < currentBatchSize; i++) {
+            const t = balancedTypes[i];
+            batchProblems.push(generateProblem(t));
+        }
+
+        // 3가지 그룹으로 분리
+        let groupDivs       = batchProblems.filter(p => p.isVerticalDiv);
+        let groupVerticals  = batchProblems.filter(p => p.isVertical && !p.isVerticalDiv);
+        let groupHorizontals= batchProblems.filter(p => !p.isVertical && !p.isVerticalDiv);
+
+        // 출력 순서대로 번호 매기기
+        let printOrder = [...groupDivs, ...groupVerticals, ...groupHorizontals];
+        printOrder.forEach((p, idx) => {
+            p.num = totalGenerated + idx + 1;
+        });
+
+        // 페이지 DOM 구성
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page';
+
+        let contentHtml = '';
+
+        // 1. 세로 나눗셈 (4열)
+        if (groupDivs.length > 0) {
+            contentHtml += '<div class="section-grid-4">';
+            groupDivs.forEach(p => {
+                contentHtml += `
+                    <div class="problem-item type-div-v">
+                        <span class="problem-num">${p.num}.</span>
+                        <div class="problem-text-div">${p.q}</div>
+                    </div>`;
+            });
+            contentHtml += '</div>';
+        }
+
+        // 2. 세로셈 (4열)
+        if (groupVerticals.length > 0) {
+            contentHtml += '<div class="section-grid-4">';
+            groupVerticals.forEach(p => {
+                contentHtml += `
+                    <div class="problem-item type-v">
+                        <span class="problem-num">${p.num}.</span>
+                        <div class="problem-text-v">${p.q}</div>
+                    </div>`;
+            });
+            contentHtml += '</div>';
+        }
+
+        // 3. 가로셈 (2열)
+        if (groupHorizontals.length > 0) {
+            contentHtml += '<div class="section-grid-2">';
+            groupHorizontals.forEach(p => {
+                contentHtml += `
+                    <div class="problem-item type-h">
+                        <span class="problem-num">${p.num}.</span>
+                        <div class="problem-text-h">${p.q}</div>
+                    </div>`;
+            });
+            contentHtml += '</div>';
+        }
+
+        const startNum = printOrder[0].num;
+        const endNum   = printOrder[printOrder.length - 1].num;
+
+        let headerHtml = (pageNum === 1)
+            ? `<div class="paper-header">
+                    <div class="paper-title">수학 연산력 강화 훈련</div>
+                    <div class="paper-info">
+                        <span>날짜: ${dateStr}</span>
+                        <span>이름: ____________</span>
+                        <span>(${startNum}~${endNum}번)</span>
+                    </div>
+               </div>`
+            : `<div class="simple-header">
+                    <span>${dateStr} 연산 연습 (${startNum}~${endNum}번)</span>
+               </div>`;
+
+        pageDiv.innerHTML = headerHtml + contentHtml;
+        printArea.appendChild(pageDiv);
+
+        allGeneratedProblems.push(...printOrder);
+        totalGenerated += currentBatchSize;
+        pageNum++;
+    }
+
+    // 정답지 생성 (기존 로직 그대로 사용)
+       const ansPerPage = 100;
+    for (let i = 0; i < allGeneratedProblems.length; i += ansPerPage) {
+        const chunk = allGeneratedProblems.slice(i, i + ansPerPage);
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page answer-page';
+
+        let gridHtml = '';
+        chunk.forEach(p => {
+            gridHtml += `<div class="answer-item">
+                            <span class="problem-num">${p.num}.</span>
+                            <span class="answer-text">${p.a}</span>
+                         </div>`;
+        });
+
+        const startNum = chunk[0].num;
+        const endNum   = chunk[chunk.length - 1].num;
+
+        pageDiv.innerHTML = `
+            <div class="answer-header">
+                <div class="paper-title" style="font-size:18pt; margin-bottom: 5px;">[ 정 답 지 ]</div>
+                <div style="font-size:11pt; color:#555;">
+                    <span>엄마표 빠른 채점 ❤️ (${startNum}~${endNum}번)</span>
+                </div>
+            </div>
+            <div class="answer-grid">
+                ${gridHtml}
+            </div>
+            <div class="answer-footer">
+                @think.blank.lab · 정답 오류나 개선 제안이 있다면 인스타 DM으로 편하게 알려주세요 :)
+            </div>`;
+        
+        printArea.appendChild(pageDiv);
+    }
+
+
+    setTimeout(() => window.print(), 500);
+}
+
+</script>
+</body>
+</html>
