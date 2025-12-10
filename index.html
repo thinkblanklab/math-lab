@@ -12,6 +12,7 @@
         .control-panel { 
             max-width: 1000px; margin: 0 auto; background: white; padding: 30px; 
             border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            width: 100%; 
             text-align: center;
         }
         h1 { margin-bottom: 10px; color: #333; }
@@ -221,6 +222,23 @@
     .mobile-warning {
         display: block;
     }
+    .control-panel {
+        padding: 0 10px;
+    }
+ .tab-btn {
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    #q_count {
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    .generate-btn {
+        padding: 10px 16px;
+        font-size: 15px;
+    }
 }
 
     </style>
@@ -228,8 +246,8 @@
 <body>
 
 <div class="control-panel">
-    <h1>🖨️ 무한 연산문제 생성기</h1>
-    <p class="subtitle">"현재 초등 1~3학년 문제 제공, 향후 업데이트 예정 "</p>
+    <h1>🖨️ 무한 연산 생성기</h1>
+    <p class="subtitle">초등 1~3학년 문제 제공, 향후 업데이트 예정</p>
 
 <!-- ✅ 여기 추가 -->
     <div class="mobile-warning">
@@ -816,4 +834,5 @@ function startGeneration() {
 </script>
 </body>
 </html>
+
 
