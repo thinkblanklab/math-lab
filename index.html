@@ -407,7 +407,17 @@
 
             </select>
         </div>
-        <button class="print-btn" onclick="startGeneration()">문제집 만들기 & 인쇄</button>
+        <button type="button"
+        class="preview-btn"
+        onclick="startGeneration(false)">
+  미리보기
+</button>
+
+<button type="button"
+        class="generate-btn"
+        onclick="startGeneration(true)">
+  문제집 만들기 & 인쇄
+</button>
     </div>
 </div>
 
@@ -615,30 +625,29 @@ function andParticle(num) {
 
     // [V45] 페이지 구성 로직 (유형별 분리 + V46 균등배분)
 // [V46] 페이지 구성 로직 (장 수 기준 + 세로 나눗셈 시 장당 12문제)
-function startGeneration() {
+function startGeneration(shouldPrint = true) {
     const checkboxes = document.querySelectorAll(`#${currentGrade} input[type="checkbox"]:checked`);
     if (checkboxes.length === 0) { 
         alert("문제를 선택해주세요!"); 
         return; 
     }
 
-const types = Array.from(checkboxes).map(cb => cb.value);
+    const types = Array.from(checkboxes).map(cb => cb.value);
 
-// ✅ 드롭다운 값 = "실제 출제할 총 문제 수"
-const targetTotalCount = parseInt(document.getElementById('q_count').value, 10);
+    // ✅ 드롭다운 값 = "실제 출제할 총 문제 수"
+    const targetTotalCount = parseInt(document.getElementById('q_count').value, 10);
 
-const printArea = document.getElementById('print-area');
-printArea.innerHTML = '';
+    const printArea = document.getElementById('print-area');
+    printArea.innerHTML = '';
 
-const today = new Date();
-const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}`;
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}`;
 
-// 세로 나눗셈 포함 여부
-const hasVDiv = types.some(t => isVerticalDivType(t));
+    // 세로 나눗셈 포함 여부
+    const hasVDiv = types.some(t => isVerticalDivType(t));
 
-// ✅ 장당 문제 수 (세로 나눗셈 있으면 16, 아니면 20)
-const problemsPerPage = hasVDiv ? 16 : 20;
-
+    // ✅ 장당 문제 수 (세로 나눗셈 있으면 16, 아니면 20)
+    const problemsPerPage = hasVDiv ? 16 : 20;
 
     let allGeneratedProblems = [];
     let totalGenerated = 0;
@@ -664,9 +673,9 @@ const problemsPerPage = hasVDiv ? 16 : 20;
         }
 
         // 3가지 그룹으로 분리
-        let groupDivs       = batchProblems.filter(p => p.isVerticalDiv);
-        let groupVerticals  = batchProblems.filter(p => p.isVertical && !p.isVerticalDiv);
-        let groupHorizontals= batchProblems.filter(p => !p.isVertical && !p.isVerticalDiv);
+        let groupDivs        = batchProblems.filter(p => p.isVerticalDiv);
+        let groupVerticals   = batchProblems.filter(p => p.isVertical && !p.isVerticalDiv);
+        let groupHorizontals = batchProblems.filter(p => !p.isVertical && !p.isVerticalDiv);
 
         // 출력 순서대로 번호 매기기
         let printOrder = [...groupDivs, ...groupVerticals, ...groupHorizontals];
@@ -743,8 +752,8 @@ const problemsPerPage = hasVDiv ? 16 : 20;
         pageNum++;
     }
 
-    // 정답지 생성 (기존 로직 그대로 사용)
-       const ansPerPage = 100;
+    // 정답지 생성
+    const ansPerPage = 100;
     for (let i = 0; i < allGeneratedProblems.length; i += ansPerPage) {
         const chunk = allGeneratedProblems.slice(i, i + ansPerPage);
         const pageDiv = document.createElement('div');
@@ -778,10 +787,18 @@ const problemsPerPage = hasVDiv ? 16 : 20;
         printArea.appendChild(pageDiv);
     }
 
-
-    setTimeout(() => window.print(), 500);
+    // ✅ 인쇄 / 미리보기 분기
+    if (shouldPrint) {
+        // PC용 인쇄
+        setTimeout(() => window.print(), 500);
+    } else {
+        // 미리보기: 생성된 영역으로 스크롤만
+        printArea.scrollIntoView({ behavior: 'smooth' });
+    }
 }
+
 
 </script>
 </body>
 </html>
+
