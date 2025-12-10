@@ -75,7 +75,9 @@
         button.print-btn { background-color: #007bff; color: white; border: none; padding: 15px 50px; font-size: 1.3em; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         button.print-btn:hover { background-color: #0056b3; transform: translateY(-2px); }
 
-        #print-area { display: none; }
+#print-area {
+    margin-top: 30px;
+}
 
         @media print {
             body { background: white; margin: 0; padding: 0; }
@@ -220,30 +222,56 @@
 .btn-row {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
 
+/* PC 기본 버튼 사이즈 */
 .btn-preview,
 .btn-main {
   border-radius: 999px;
-  font-size: 14px;
-  padding: 8px 18px;
+  font-size: 15px;
+  padding: 10px 22px;
   cursor: pointer;
+  font-weight: 600;
 }
 
+/* 미리보기: 은은한 파란색 버튼 */
 .btn-preview {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.btn-preview:hover {
+  background: #dbeafe;
 }
 
+/* 인쇄 버튼: 진한 파란색, 좀 더 크고 강조 */
 .btn-main {
   border: none;
   background: #2563eb;
   color: #ffffff;
-  padding: 9px 24px;
+  padding: 11px 30px;
+  font-size: 16px;
 }
+.btn-main:hover {
+  background: #1d4ed8;
+}
+
+/* 모바일에서는 버튼을 세로로 꽉 채우게 */
+@media (max-width: 600px) {
+  .btn-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn-preview,
+  .btn-main {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 
 		
     </style>
@@ -828,6 +856,7 @@ function startGeneration(shouldPrint = true) {
 </script>
 </body>
 </html>
+
 
 
 
