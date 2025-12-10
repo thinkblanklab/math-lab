@@ -113,9 +113,13 @@
                 padding-top: 50px; 
                 padding-bottom: 10px; 
             }
-            .problem-text-div { font-family: 'Courier New', monospace; font-weight: bold; font-size: 18pt; margin-left: 5px; }
+.problem-text-div {
+    font-size: 18px;
+}
+            
+            .problem-text-div { font-family: 'Courier New', monospace; font-weight: bold; font-size: 20pt; margin-left: 5px; }
 
-            .problem-num { font-size: 10pt; color: #666; width: 18px; flex-shrink: 0; margin-top: 6px; }
+            .problem-num { font-size: 9pt; color: #666; width: 18px; flex-shrink: 0; margin-top: 6px; }
             .v-row { letter-spacing: 2px; padding-right: 5px; margin-bottom: 5px; }
             .v-bot { border-bottom: 2px solid #000; padding-bottom: 3px; position: relative; padding-left: 25px; min-width: 2.5em; }
             .v-op { position: absolute; left: 2px; bottom: 3px; font-size: 0.7em; }
@@ -256,13 +260,13 @@
 <div class="guide-card">
   <div class="guide-top">
     <p><span class="guide-number">1</span> 학년 선택 후 원하는 유형 체크(다중 선택 가능).</p>
-    <p><span class="guide-number">2</span> 장 수 선택 (기본 1장 20문제, 세로나눗셈 별도)</p>
+    <p><span class="guide-number">2</span> 장 수 선택 (기본 1장 20문제, 세로나눗셈 16문제)</p>
     <p><span class="guide-number">3</span> [문제집 만들기&인쇄] 버튼 클릭 자동 문제 생성.</p>
   </div>
 
   <div class="guide-sub">
     ✔ 같은 학년의 여러 문제 유형을 함께 선택하면 문제들이 랜덤으로 섞여서 출제.<br>
-    ✔ 세로 나눗셈은 한 장에 16문제(혼합 시 13문제)까지 출력.
+    ✔ 세로 나눗셈은 한 장에 16문제까지 출력.
   </div>
 </div>
 
@@ -822,6 +826,7 @@ function startGeneration() {
 </script>
 </body>
 </html>
+
 
 
 
