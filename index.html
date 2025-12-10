@@ -808,42 +808,44 @@ function startGeneration(shouldPrint = true) {
         pageNum++;
     }
 
-    // 정답지 생성
-    const ansPerPage = 100;
-    for (let i = 0; i < allGeneratedProblems.length; i += ansPerPage) {
-        const chunk = allGeneratedProblems.slice(i, i + ansPerPage);
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'page answer-page';
+     // 🔹 정답지는 "인쇄 모드"일 때만 생성
+    if (shouldPrint) {
+        const ansPerPage = 100;
+        for (let i = 0; i < allGeneratedProblems.length; i += ansPerPage) {
+            const chunk = allGeneratedProblems.slice(i, i + ansPerPage);
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'page answer-page';
 
-        let gridHtml = '';
-        chunk.forEach(p => {
-            gridHtml += `<div class="answer-item">
-                            <span class="problem-num">${p.num}.</span>
-                            <span class="answer-text">${p.a}</span>
-                         </div>`;
-        });
+            let gridHtml = '';
+            chunk.forEach(p => {
+                gridHtml += `<div class="answer-item">
+                                <span class="problem-num">${p.num}.</span>
+                                <span class="answer-text">${p.a}</span>
+                             </div>`;
+            });
 
-        const startNum = chunk[0].num;
-        const endNum   = chunk[chunk.length - 1].num;
+            const startNum = chunk[0].num;
+            const endNum   = chunk[chunk.length - 1].num;
 
-        pageDiv.innerHTML = `
-            <div class="answer-header">
-                <div class="paper-title" style="font-size:18pt; margin-bottom: 5px;">[ 정 답 지 ]</div>
-                <div style="font-size:11pt; color:#555;">
-                    <span>엄마표 빠른 채점 ❤️ (${startNum}~${endNum}번)</span>
+            pageDiv.innerHTML = `
+                <div class="answer-header">
+                    <div class="paper-title" style="font-size:18pt; margin-bottom: 5px;">[ 정 답 지 ]</div>
+                    <div style="font-size:11pt; color:#555;">
+                        <span>엄마표 빠른 채점 ❤️ (${startNum}~${endNum}번)</span>
+                    </div>
                 </div>
-            </div>
-            <div class="answer-grid">
-                ${gridHtml}
-            </div>
-            <div class="answer-footer">
-                @think.blank.lab · 정답 오류나 개선 제안이 있다면 인스타 DM으로 편하게 알려주세요 :)
-            </div>`;
-        
-        printArea.appendChild(pageDiv);
+                <div class="answer-grid">
+                    ${gridHtml}
+                </div>
+                <div class="answer-footer">
+                    @think.blank.lab · 정답 오류나 개선 제안이 있다면 인스타 DM으로 편하게 알려주세요 :)
+                </div>`;
+
+            printArea.appendChild(pageDiv);
+        }
     }
 
-    // ✅ 인쇄 / 미리보기 분기
+    // 🔹 인쇄 / 미리보기 동작
     if (shouldPrint) {
         setTimeout(() => window.print(), 500);
     } else {
@@ -853,9 +855,11 @@ function startGeneration(shouldPrint = true) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
