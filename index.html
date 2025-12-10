@@ -27,6 +27,57 @@
     h1 { font-size: 1.5em; } /* 제목도 너무 크지 않게 조절 */
 }
 
+		/* [미리보기 모드 전용 스타일] */
+#print-area.preview-mode {
+    display: block; /* 평소엔 숨김(none)이지만 미리보기 땐 보임 */
+    background: #555; /* 배경을 어둡게 해서 종이가 돋보이게 */
+    padding: 20px;
+    margin-top: 30px;
+}
+
+#print-area.preview-mode .page {
+    width: 210mm; /* A4 너비 */
+    min-height: 297mm; /* A4 높이 */
+    margin: 0 auto 30px auto; /* 가운데 정렬 및 아래 간격 */
+    background: white;
+    padding: 20mm; /* 실제 인쇄 여백과 비슷하게 */
+    box-shadow: 0 0 15px rgba(0,0,0,0.3); /* 그림자 효과 */
+    box-sizing: border-box;
+}
+
+/* 모바일 미리보기 대응: 화면보다 종이가 크면 가로 스크롤 */
+@media screen and (max-width: 800px) {
+    #print-area.preview-mode {
+        padding: 10px;
+        overflow-x: auto; /* 옆으로 넘겨 볼 수 있게 */
+    }
+    #print-area.preview-mode .page {
+        /* 모바일에서는 A4 크기 고정보다는 축소해서 보여주거나 스크롤 */
+        transform: scale(1); 
+        transform-origin: top left;
+    }
+}
+
+/* 미리보기 상단에 둥둥 떠있는 인쇄/닫기 버튼 */
+.preview-controls {
+    text-align: center;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 10px;
+    z-index: 999;
+}
+.preview-btn {
+    padding: 12px 25px;
+    margin: 5px;
+    font-size: 1.1em;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    font-weight: bold;
+}
+.btn-print-real { background: #28a745; color: white; } /* 초록색 인쇄 */
+.btn-close { background: #dc3545; color: white; }      /* 빨간색 닫기 */
 
         h1 { margin-bottom: 10px; color: #333; }
         .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
@@ -392,23 +443,18 @@
     </div>
 
     <div class="bottom-controls">
-               <div class="ctrl-group">
-            <label class="ctrl-label">문제 수</label>
-            <select id="q_count">
-                <option value="20">20문제 (1장)</option>
-		<option value="30">30문제 (1.5장)</option>
-		<option value="40">40문제 (2장)</option>
-		<option value="50">50문제 (2.5장)</option>
-		<option value="60">60문제 (3장)</option>
-		<option value="70">70문제 (3.5장)</option>
-		<option value="80">80문제 (4장)</option>
-		<option value="90">90문제 (4.5장)</option>
-		<option value="100">100문제 (5장)</option>
-
-            </select>
-        </div>
-        <button class="print-btn" onclick="startGeneration()">문제집 만들기 & 인쇄</button>
+    <div class="ctrl-group">
+        <label class="ctrl-label">문제 수</label>
+        <select id="q_count">
+            <option value="20">20문제 (1장)</option>
+            <option value="30">30문제 (1.5장)</option>
+            <option value="40">40문제 (2장)</option>
+            <option value="50">50문제 (2.5장)</option>
+            <option value="60">60문제 (3장)</option>
+        </select>
     </div>
+    <button class="print-btn" onclick="startPreview()">문제집 생성 (미리보기) ▼</button>
+</div>
 </div>
 
 <div id="print-area"></div>
@@ -615,30 +661,62 @@ function andParticle(num) {
 
     // [V45] 페이지 구성 로직 (유형별 분리 + V46 균등배분)
 // [V46] 페이지 구성 로직 (장 수 기준 + 세로 나눗셈 시 장당 12문제)
-function startGeneration() {
+// [1] 미리보기 시작 버튼을 눌렀을 때 실행되는 함수
+function startPreview() {
+    // 먼저 내용을 생성합니다. (체크박스 선택 안 했으면 중단)
+    const isSuccess = generateContent(); 
+    if (!isSuccess) return; 
+    
+    const printArea = document.getElementById('print-area');
+    
+    // 미리보기 모드 스타일 적용 (CSS에 정의된 클래스)
+    printArea.classList.add('preview-mode'); 
+    printArea.style.display = 'block';
+    
+    // 미리보기 상단에 '진짜 인쇄' 버튼과 '닫기' 버튼 추가
+    // (화면 맨 위에 고정되어 따라다니게 됨)
+    const btnHtml = `
+        <div class="preview-controls">
+            <button class="preview-btn btn-print-real" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+            <button class="preview-btn btn-close" onclick="closePreview()">❌ 닫기</button>
+        </div>
+    `;
+    
+    // 생성된 문제지(innerHTML) 앞에 버튼을 붙입니다.
+    printArea.innerHTML = btnHtml + printArea.innerHTML;
+
+    // 화면을 부드럽게 아래로 내려서 문제지를 보여줍니다.
+    printArea.scrollIntoView({ behavior: 'smooth' });
+}
+
+// [2] 미리보기 닫기 버튼을 눌렀을 때
+function closePreview() {
+    const printArea = document.getElementById('print-area');
+    printArea.style.display = 'none'; // 숨기기
+    printArea.classList.remove('preview-mode'); // 스타일 제거
+    printArea.innerHTML = ''; // 내용 초기화
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // 화면 맨 위로 이동
+}
+
+// [3] 실제 문제 내용을 만드는 함수 (기존 startGeneration 로직에서 인쇄 부분만 뺌)
+function generateContent() {
     const checkboxes = document.querySelectorAll(`#${currentGrade} input[type="checkbox"]:checked`);
     if (checkboxes.length === 0) { 
         alert("문제를 선택해주세요!"); 
-        return; 
+        return false; // 실패 신호 반환
     }
 
-const types = Array.from(checkboxes).map(cb => cb.value);
+    const types = Array.from(checkboxes).map(cb => cb.value);
+    const targetTotalCount = parseInt(document.getElementById('q_count').value, 10);
+    const printArea = document.getElementById('print-area');
+    
+    // 초기화
+    printArea.innerHTML = '';
 
-// ✅ 드롭다운 값 = "실제 출제할 총 문제 수"
-const targetTotalCount = parseInt(document.getElementById('q_count').value, 10);
-
-const printArea = document.getElementById('print-area');
-printArea.innerHTML = '';
-
-const today = new Date();
-const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}`;
-
-// 세로 나눗셈 포함 여부
-const hasVDiv = types.some(t => isVerticalDivType(t));
-
-// ✅ 장당 문제 수 (세로 나눗셈 있으면 16, 아니면 20)
-const problemsPerPage = hasVDiv ? 16 : 20;
-
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}`;
+    const hasVDiv = types.some(t => isVerticalDivType(t));
+    const problemsPerPage = hasVDiv ? 16 : 20;
 
     let allGeneratedProblems = [];
     let totalGenerated = 0;
@@ -648,7 +726,6 @@ const problemsPerPage = hasVDiv ? 16 : 20;
         const pageSize = problemsPerPage;
         const currentBatchSize = Math.min(pageSize, targetTotalCount - totalGenerated);
 
-        // 이번 페이지에 들어갈 타입들을 균등 분배
         let balancedTypes = [];
         let typeIndex = totalGenerated % types.length; 
         for (let k = 0; k < currentBatchSize; k++) {
@@ -656,84 +733,49 @@ const problemsPerPage = hasVDiv ? 16 : 20;
             typeIndex = (typeIndex + 1) % types.length;
         }
 
-        // 문제 생성
         let batchProblems = [];
         for (let i = 0; i < currentBatchSize; i++) {
-            const t = balancedTypes[i];
-            batchProblems.push(generateProblem(t));
+            batchProblems.push(generateProblem(balancedTypes[i]));
         }
 
-        // 3가지 그룹으로 분리
-        let groupDivs       = batchProblems.filter(p => p.isVerticalDiv);
-        let groupVerticals  = batchProblems.filter(p => p.isVertical && !p.isVerticalDiv);
-        let groupHorizontals= batchProblems.filter(p => !p.isVertical && !p.isVerticalDiv);
-
-        // 출력 순서대로 번호 매기기
+        let groupDivs = batchProblems.filter(p => p.isVerticalDiv);
+        let groupVerticals = batchProblems.filter(p => p.isVertical && !p.isVerticalDiv);
+        let groupHorizontals = batchProblems.filter(p => !p.isVertical && !p.isVerticalDiv);
+        
         let printOrder = [...groupDivs, ...groupVerticals, ...groupHorizontals];
-        printOrder.forEach((p, idx) => {
-            p.num = totalGenerated + idx + 1;
-        });
+        printOrder.forEach((p, idx) => { p.num = totalGenerated + idx + 1; });
 
-        // 페이지 DOM 구성
         const pageDiv = document.createElement('div');
         pageDiv.className = 'page';
 
         let contentHtml = '';
-
-        // 1. 세로 나눗셈 (4열)
         if (groupDivs.length > 0) {
             contentHtml += '<div class="section-grid-4">';
-            groupDivs.forEach(p => {
-                contentHtml += `
-                    <div class="problem-item type-div-v">
-                        <span class="problem-num">${p.num}.</span>
-                        <div class="problem-text-div">${p.q}</div>
-                    </div>`;
+            groupDivs.forEach(p => { 
+                contentHtml += `<div class="problem-item type-div-v"><span class="problem-num">${p.num}.</span><div class="problem-text-div">${p.q}</div></div>`; 
             });
             contentHtml += '</div>';
         }
-
-        // 2. 세로셈 (4열)
         if (groupVerticals.length > 0) {
             contentHtml += '<div class="section-grid-4">';
-            groupVerticals.forEach(p => {
-                contentHtml += `
-                    <div class="problem-item type-v">
-                        <span class="problem-num">${p.num}.</span>
-                        <div class="problem-text-v">${p.q}</div>
-                    </div>`;
+            groupVerticals.forEach(p => { 
+                contentHtml += `<div class="problem-item type-v"><span class="problem-num">${p.num}.</span><div class="problem-text-v">${p.q}</div></div>`; 
             });
             contentHtml += '</div>';
         }
-
-        // 3. 가로셈 (2열)
         if (groupHorizontals.length > 0) {
             contentHtml += '<div class="section-grid-2">';
-            groupHorizontals.forEach(p => {
-                contentHtml += `
-                    <div class="problem-item type-h">
-                        <span class="problem-num">${p.num}.</span>
-                        <div class="problem-text-h">${p.q}</div>
-                    </div>`;
+            groupHorizontals.forEach(p => { 
+                contentHtml += `<div class="problem-item type-h"><span class="problem-num">${p.num}.</span><div class="problem-text-h">${p.q}</div></div>`; 
             });
             contentHtml += '</div>';
         }
 
         const startNum = printOrder[0].num;
-        const endNum   = printOrder[printOrder.length - 1].num;
-
+        const endNum = printOrder[printOrder.length - 1].num;
         let headerHtml = (pageNum === 1)
-            ? `<div class="paper-header">
-                    <div class="paper-title">수학 연산력 강화 훈련</div>
-                    <div class="paper-info">
-                        <span>날짜: ${dateStr}</span>
-                        <span>이름: ____________</span>
-                        <span>(${startNum}~${endNum}번)</span>
-                    </div>
-               </div>`
-            : `<div class="simple-header">
-                    <span>${dateStr} 연산 연습 (${startNum}~${endNum}번)</span>
-               </div>`;
+            ? `<div class="paper-header"><div class="paper-title">수학 연산력 강화 훈련</div><div class="paper-info"><span>날짜: ${dateStr}</span><span>이름: ____________</span><span>(${startNum}~${endNum}번)</span></div></div>`
+            : `<div class="simple-header"><span>${dateStr} 연산 연습 (${startNum}~${endNum}번)</span></div>`;
 
         pageDiv.innerHTML = headerHtml + contentHtml;
         printArea.appendChild(pageDiv);
@@ -743,24 +785,19 @@ const problemsPerPage = hasVDiv ? 16 : 20;
         pageNum++;
     }
 
-    // 정답지 생성 (기존 로직 그대로 사용)
-       const ansPerPage = 100;
+    // 정답지 생성
+    const ansPerPage = 100;
     for (let i = 0; i < allGeneratedProblems.length; i += ansPerPage) {
         const chunk = allGeneratedProblems.slice(i, i + ansPerPage);
         const pageDiv = document.createElement('div');
         pageDiv.className = 'page answer-page';
-
         let gridHtml = '';
-        chunk.forEach(p => {
-            gridHtml += `<div class="answer-item">
-                            <span class="problem-num">${p.num}.</span>
-                            <span class="answer-text">${p.a}</span>
-                         </div>`;
+        chunk.forEach(p => { 
+            gridHtml += `<div class="answer-item"><span class="problem-num">${p.num}.</span><span class="answer-text">${p.a}</span></div>`; 
         });
-
         const startNum = chunk[0].num;
-        const endNum   = chunk[chunk.length - 1].num;
-
+        const endNum = chunk[chunk.length - 1].num;
+        
         pageDiv.innerHTML = `
             <div class="answer-header">
                 <div class="paper-title" style="font-size:18pt; margin-bottom: 5px;">[ 정 답 지 ]</div>
@@ -768,20 +805,16 @@ const problemsPerPage = hasVDiv ? 16 : 20;
                     <span>엄마표 빠른 채점 ❤️ (${startNum}~${endNum}번)</span>
                 </div>
             </div>
-            <div class="answer-grid">
-                ${gridHtml}
-            </div>
-            <div class="answer-footer">
-                @think.blank.lab · 정답 오류나 개선 제안이 있다면 인스타 DM으로 편하게 알려주세요 :)
-            </div>`;
+            <div class="answer-grid">${gridHtml}</div>
+            <div class="answer-footer">@think.blank.lab · 정답 오류나 개선 제안이 있다면 인스타 DM으로 편하게 알려주세요 :)</div>`;
         
         printArea.appendChild(pageDiv);
     }
-
-
-    setTimeout(() => window.print(), 500);
+    
+    return true; // 성공적으로 생성됨
 }
 
 </script>
 </body>
 </html>
+
