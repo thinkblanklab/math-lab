@@ -451,15 +451,7 @@
         filterOptions();
     }
 
-    function filterOptions() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        const activeGroup = document.getElementById(currentGrade);
-        const details = activeGroup.querySelectorAll('details');
-        if (keyword) details.forEach(d => d.open = true);
-        activeGroup.querySelectorAll('label').forEach(label => {
-            label.style.display = label.innerText.toLowerCase().includes(keyword) ? "flex" : "none";
-        });
-    }
+    
 
    function rand(min, max) {
         // 난이도 없이, 범위 안에서 균일하게 랜덤 생성
@@ -833,6 +825,7 @@ function startGeneration() {
 </script>
 </body>
 </html>
+
 
 
 
